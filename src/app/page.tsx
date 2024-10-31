@@ -12,8 +12,8 @@ import PumpStatusCard from '@/components/PumpStatusCard'
 
 interface SensorData {
   humedadSuelo: number | "apagado" | "no conectado"
-  humedad: number | "Apagado" | "no conectado"
-  temperatura: number | "Apagado" | "no conectado"
+  humedad: number | "apagado" | "sensor no conectado"
+  temperatura: number | "apagado" | "sensor no conectado"
   nivelAgua: "Sin agua" | "Con agua"
   modoBomba: "automatico" | "manual"
   Bomba: "apagado" | "encendido"
@@ -26,6 +26,7 @@ export default function Component() {
     const socket = io(`${process.env.NEXT_PUBLIC_API_URL}`)
 
     socket.on('sensorData', (data: SensorData) => {
+      console.log(data)
       setSensorData(data)
     })
 

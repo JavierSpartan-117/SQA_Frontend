@@ -10,8 +10,8 @@ export default function HumidityTemperatureCard({
     humidity,
     temperature
 }: {
-    humidity: number | "Apagado" | "no conectado",
-    temperature: number | "Apagado" | "no conectado"
+    humidity: number | "apagado" | "sensor no conectado",
+    temperature: number | "apagado" | "sensor no conectado"
 }) {
     const { controlSensor, loading, error } = useControlSensor()
     const isConnected = typeof humidity === 'number' && typeof temperature === 'number'

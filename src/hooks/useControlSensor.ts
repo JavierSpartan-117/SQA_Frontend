@@ -19,7 +19,6 @@ export default function useControlSensor() {
                 }),
             });
         } catch (err) {
-            console.error('Error al cambiar el estado del sensor:', err);
             setError(err as Error);
         } finally {
             setLoading(false);
