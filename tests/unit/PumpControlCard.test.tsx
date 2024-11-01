@@ -3,7 +3,6 @@ import '@testing-library/jest-dom';
 import PumpControlCard from '../../src/components/PumpControlCard';
 import useControlSensor from '../../src/hooks/useControlSensor';
 
-// Mock del hook personalizado
 jest.mock('../../src/hooks/useControlSensor');
 
 describe('PumpControlCard', () => {
@@ -11,7 +10,6 @@ describe('PumpControlCard', () => {
     const mockControlSensor = jest.fn();
 
     beforeEach(() => {
-        // Configura el mock para cada prueba
         (useControlSensor as jest.Mock).mockReturnValue({
             waterPumpMode: mockWaterPumpMode,
             controlSensor: mockControlSensor,
@@ -28,7 +26,6 @@ describe('PumpControlCard', () => {
         const autoButton = screen.getByRole('button', { name: /Automático/i });
         fireEvent.click(autoButton);
 
-        // Verifica que el modo de operación cambie a automático
         expect(mockWaterPumpMode).toHaveBeenCalledWith('auto');
     });
 
@@ -38,7 +35,6 @@ describe('PumpControlCard', () => {
         const manualButton = screen.getByRole('button', { name: /Manual/i });
         fireEvent.click(manualButton);
 
-        // Verifica que el modo de operación cambie a manual
         expect(mockWaterPumpMode).toHaveBeenCalledWith('manual');
     });
 
@@ -48,7 +44,6 @@ describe('PumpControlCard', () => {
         const turnOnButton = screen.getByRole('button', { name: /Encender Bomba/i });
         fireEvent.click(turnOnButton);
 
-        // Verifica que controlSensor fue llamado con los argumentos correctos
         expect(mockControlSensor).toHaveBeenCalledWith('water-pump', 'on');
     });
 
@@ -58,7 +53,6 @@ describe('PumpControlCard', () => {
         const turnOffButton = screen.getByRole('button', { name: /Apagar Bomba/i });
         fireEvent.click(turnOffButton);
 
-        // Verifica que controlSensor fue llamado con los argumentos correctos
         expect(mockControlSensor).toHaveBeenCalledWith('water-pump', 'off');
     });
 
@@ -68,7 +62,6 @@ describe('PumpControlCard', () => {
         const turnOnButton = screen.getByRole('button', { name: /Encender Bomba/i });
         const turnOffButton = screen.getByRole('button', { name: /Apagar Bomba/i });
 
-        // Verifica que ambos botones están deshabilitados
         expect(turnOnButton).toBeDisabled();
         expect(turnOffButton).toBeDisabled();
     });

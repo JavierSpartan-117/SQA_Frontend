@@ -26,7 +26,6 @@ export default function Component() {
     const socket = io(`${process.env.NEXT_PUBLIC_API_URL}`)
 
     socket.on('sensorData', (data: SensorData) => {
-      console.log(data)
       setSensorData(data)
     })
 
