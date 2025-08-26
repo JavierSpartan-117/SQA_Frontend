@@ -3,18 +3,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Progress } from "./ui/progress"
 import { Separator } from "./ui/separator"
 import { Button } from "./ui/button"
-import useControlSensor from "@/hooks/useControlSensor"
-
+import { useState } from "react"
 
 export default function HumidityTemperatureCard({
     humidity,
-    temperature
+    temperature,
+    onSensorControl,
+    sensorStatus
 }: {
     humidity: number | "apagado" | "sensor no conectado",
-    temperature: number | "apagado" | "sensor no conectado"
+    temperature: number | "apagado" | "sensor no conectado",
+    onSensorControl: (action: 'on' | 'off') => void,
+    sensorStatus: "encendido" | "apagado"
 }) {
-    const { controlSensor, loading, error } = useControlSensor()
-    const isConnected = typeof humidity === 'number' && typeof temperature === 'number'
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<Error | null>(null)
+    
+    const isConnected = (typeof humidity === 'number' && typeof temperature === 'number') && sensorStatus === "encendido"
+
+    // Función simulada para controlar el sensor
+    const handleSensorControl = async (action: 'on' | 'off') => {
+        setLoading(true)
+        setError(null)
+        try {
+            // Simular delay de red
+            await new Promise(resolve => setTimeout(resolve, 500))
+            onSensorControl(action)
+        } catch (err) {
+            setError(err as Error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <Card className="border-green-100 shadow-lg hover:shadow-xl transition-all duration-300 hover:translate-y-[-2px]">
@@ -39,7 +59,7 @@ export default function HumidityTemperatureCard({
                     {/* Sección de Humedad */}
                     <div className="space-y-2">
                         <h3 className="text-sm font-medium text-green-800">Humedad del Aire</h3>
-                        {typeof humidity === 'number' ? (
+                        {(typeof humidity === 'number' && sensorStatus === "encendido") ? (
                             <div className="space-y-2">
                                 <div className="flex items-baseline gap-2">
                                     <div className="text-3xl font-bold text-green-800">{humidity}%</div>
@@ -48,11 +68,12 @@ export default function HumidityTemperatureCard({
                                 <Progress
                                     value={humidity}
                                     className="h-3 bg-green-100"
-                                // indicatorClassName="bg-green-600 transition-all duration-500" 
                                 />
                             </div>
                         ) : (
-                            <div className="text-xl font-bold text-red-500">{humidity}</div>
+                            <div className="text-xl font-bold text-red-500">
+                                {sensorStatus === "apagado" ? "apagado" : humidity}
+                            </div>
                         )}
                     </div>
 
@@ -61,7 +82,7 @@ export default function HumidityTemperatureCard({
                     {/* Sección de Temperatura */}
                     <div className="space-y-2">
                         <h3 className="text-sm font-medium text-green-800">Temperatura</h3>
-                        {typeof temperature === 'number' ? (
+                        {(typeof temperature === 'number' && sensorStatus === "encendido") ? (
                             <div className="space-y-2">
                                 <div className="flex items-baseline gap-2">
                                     <div className="text-3xl font-bold text-green-800">{temperature}°C</div>
@@ -71,11 +92,12 @@ export default function HumidityTemperatureCard({
                                     value={temperature}
                                     max={50}
                                     className="h-3 bg-green-100"
-                                // indicatorClassName="bg-green-600 transition-all duration-500" 
                                 />
                             </div>
                         ) : (
-                            <div className="text-xl font-bold text-red-500">{temperature}</div>
+                            <div className="text-xl font-bold text-red-500">
+                                {sensorStatus === "apagado" ? "apagado" : temperature}
+                            </div>
                         )}
                     </div>
 
@@ -85,8 +107,8 @@ export default function HumidityTemperatureCard({
                             size="sm"
                             variant="outline"
                             className="border-green-200 hover:bg-green-100 hover:text-green-800 transition-colors duration-300"
-                            onClick={() => controlSensor('humidity-temperature', 'on')}
-                            disabled={isConnected || loading}
+                            onClick={() => handleSensorControl('on')}
+                            disabled={sensorStatus === "encendido" || loading}
                         >
                             <Power className="h-4 w-4 mr-2" />
                             Encender DHT11
@@ -95,8 +117,8 @@ export default function HumidityTemperatureCard({
                             size="sm"
                             variant="outline"
                             className="border-red-200 hover:bg-red-100 hover:text-red-800 transition-colors duration-300"
-                            onClick={() => controlSensor('humidity-temperature', 'off')}
-                            disabled={!isConnected || loading}
+                            onClick={() => handleSensorControl('off')}
+                            disabled={sensorStatus === "apagado" || loading}
                         >
                             <Power className="h-4 w-4 mr-2" />
                             Apagar DHT11

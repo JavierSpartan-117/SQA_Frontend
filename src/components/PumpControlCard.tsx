@@ -1,22 +1,58 @@
 import { Activity, Power } from "lucide-react"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import useControlSensor from "@/hooks/useControlSensor"
+import { useState } from "react"
 
 
 export default function PumpControlCard({
     pumpMode,
     waterLevel,
-    pumpStatus
+    pumpStatus,
+    onPumpControl,
+    onModeChange
 }: {
     pumpMode: "automatico" | "manual"
     waterLevel: "Sin agua" | "Con agua"
     pumpStatus: "apagado" | "encendido"
+    onPumpControl: (action: 'on' | 'off') => void
+    onModeChange: (mode: 'auto' | 'manual') => void
 }) {
-    const { waterPumpMode, controlSensor, loading, error } = useControlSensor()
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<Error | null>(null)
+    
     const isManual = pumpMode === "manual"
     const canControlPump = isManual && waterLevel === "Con agua"
     const isPumpOn = pumpStatus === "encendido"
+
+    // Función simulada para controlar la bomba
+    const handlePumpControl = async (action: 'on' | 'off') => {
+        setLoading(true)
+        setError(null)
+        try {
+            // Simular delay de red
+            await new Promise(resolve => setTimeout(resolve, 500))
+            onPumpControl(action)
+        } catch (err) {
+            setError(err as Error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    // Función simulada para cambiar el modo
+    const handleModeChange = async (mode: 'auto' | 'manual') => {
+        setLoading(true)
+        setError(null)
+        try {
+            // Simular delay de red
+            await new Promise(resolve => setTimeout(resolve, 500))
+            onModeChange(mode)
+        } catch (err) {
+            setError(err as Error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <Card className="border-green-100 shadow-lg hover:shadow-xl transition-all duration-300 hover:translate-y-[-2px]">
@@ -39,7 +75,7 @@ export default function PumpControlCard({
                                 className={pumpMode === "automatico"
                                     ? "bg-green-600 hover:bg-green-700 transition-colors duration-300"
                                     : "border-green-200 hover:bg-green-100 hover:text-green-800 transition-colors duration-300"}
-                                onClick={() => waterPumpMode('auto')}
+                                onClick={() => handleModeChange('auto')}
                             >
                                 <Activity className="h-4 w-4 mr-2" />
                                 Automático
@@ -50,7 +86,7 @@ export default function PumpControlCard({
                                 className={pumpMode === "manual"
                                     ? "bg-green-600 hover:bg-green-700 transition-colors duration-300"
                                     : "border-green-200 hover:bg-green-100 hover:text-green-800 transition-colors duration-300"}
-                                onClick={() => waterPumpMode('manual')}
+                                onClick={() => handleModeChange('manual')}
                             >
                                 <Power className="h-4 w-4 mr-2" />
                                 Manual
@@ -67,7 +103,7 @@ export default function PumpControlCard({
                                 size="sm"
                                 variant="outline"
                                 className="border-green-200 hover:bg-green-100 hover:text-green-800 transition-colors duration-300 flex-1"
-                                onClick={() => controlSensor('water-pump', 'on')}
+                                onClick={() => handlePumpControl('on')}
                                 disabled={!canControlPump || isPumpOn || loading}
                             >
                                 <Power className="h-4 w-4 mr-2" />
@@ -77,7 +113,7 @@ export default function PumpControlCard({
                                 size="sm"
                                 variant="outline"
                                 className="border-red-200 hover:bg-red-100 hover:text-red-800 transition-colors duration-300 flex-1"
-                                onClick={() => controlSensor('water-pump', 'off')}
+                                onClick={() => handlePumpControl('off')}
                                 disabled={!canControlPump || !isPumpOn || loading}
                             >
                                 <Power className="h-4 w-4 mr-2" />

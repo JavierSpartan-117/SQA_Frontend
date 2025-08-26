@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { io } from 'socket.io-client'
 import { Activity } from "lucide-react"
 import Image from 'next/image'
 import SoilMoistureCard from '@/components/SoilMoistureCard'
@@ -17,20 +16,129 @@ interface SensorData {
   nivelAgua: "Sin agua" | "Con agua"
   modoBomba: "automatico" | "manual"
   Bomba: "apagado" | "encendido"
+  // Estados de los sensores
+  sensorHumedadSuelo: "encendido" | "apagado"
+  sensorDHT11: "encendido" | "apagado"
+}
+
+// Función para generar datos simulados
+const generateSimulatedData = (): SensorData => {
+  return {
+    humedadSuelo: Math.floor(Math.random() * 30) + 35, // Entre 35% y 65% (más realista)
+    humedad: Math.floor(Math.random() * 25) + 40, // Entre 40% y 65% (más realista)
+    temperatura: Math.floor(Math.random() * 15) + 20, // Entre 20°C y 35°C (más realista)
+    nivelAgua: Math.random() > 0.2 ? "Con agua" : "Sin agua", // 80% probabilidad de tener agua
+    modoBomba: Math.random() > 0.6 ? "automatico" : "manual", // 40% probabilidad de automático
+    Bomba: Math.random() > 0.7 ? "encendido" : "apagado", // 30% probabilidad de estar encendida
+    sensorHumedadSuelo: "encendido",
+    sensorDHT11: "encendido"
+  }
 }
 
 export default function Component() {
   const [sensorData, setSensorData] = useState<SensorData | null>(null)
 
-  useEffect(() => {
-    const socket = io(`${process.env.NEXT_PUBLIC_API_URL}`)
+  // Función para actualizar datos simulados
+  const updateSimulatedData = () => {
+    setSensorData(prev => {
+      if (!prev) return generateSimulatedData()
+      
+      // Solo actualizar datos si los sensores están encendidos
+      let newHumedadSuelo = prev.humedadSuelo
+      let newHumedad = prev.humedad
+      let newTemperatura = prev.temperatura
+      
+      if (prev.sensorHumedadSuelo === "encendido") {
+        const variation = 0.1 // 10% de variación máxima
+        const humedadSuelo = Math.max(0, Math.min(100, 
+          (prev.humedadSuelo as number) + (Math.random() - 0.5) * variation * (prev.humedadSuelo as number)
+        ))
+        newHumedadSuelo = Math.round(humedadSuelo)
+      }
+      
+      if (prev.sensorDHT11 === "encendido") {
+        const variation = 0.1 // 10% de variación máxima
+        const humedad = Math.max(0, Math.min(100, 
+          (prev.humedad as number) + (Math.random() - 0.5) * variation * (prev.humedad as number)
+        ))
+        const temperatura = Math.max(10, Math.min(50, 
+          (prev.temperatura as number) + (Math.random() - 0.5) * variation * (prev.temperatura as number)
+        ))
+        newHumedad = Math.round(humedad)
+        newTemperatura = Math.round(temperatura * 10) / 10 // Redondear a 1 decimal
+      }
 
-    socket.on('sensorData', (data: SensorData) => {
-      setSensorData(data)
+      return {
+        humedadSuelo: newHumedadSuelo,
+        humedad: newHumedad,
+        temperatura: newTemperatura,
+        nivelAgua: prev.nivelAgua, // El nivel de agua no cambia tan frecuentemente
+        modoBomba: prev.modoBomba, // El modo no cambia automáticamente
+        Bomba: prev.Bomba, // El estado de la bomba no cambia automáticamente
+        sensorHumedadSuelo: prev.sensorHumedadSuelo,
+        sensorDHT11: prev.sensorDHT11
+      }
     })
+  }
+
+  // Función para controlar la bomba de forma simulada
+  const controlPump = (action: 'on' | 'off') => {
+    if (sensorData) {
+      setSensorData(prev => prev ? {
+        ...prev,
+        Bomba: action === 'on' ? 'encendido' : 'apagado'
+      } : null)
+    }
+  }
+
+  // Función para cambiar el modo de la bomba de forma simulada
+  const changePumpMode = (mode: 'auto' | 'manual') => {
+    if (sensorData) {
+      setSensorData(prev => prev ? {
+        ...prev,
+        modoBomba: mode === 'auto' ? 'automatico' : 'manual'
+      } : null)
+    }
+  }
+
+  // Función para controlar el sensor de humedad del suelo de forma simulada
+  const controlSoilMoistureSensor = (action: 'on' | 'off') => {
+    if (sensorData) {
+      setSensorData(prev => prev ? {
+        ...prev,
+        sensorHumedadSuelo: action === 'on' ? 'encendido' : 'apagado',
+        humedadSuelo: action === 'on' ? (Math.floor(Math.random() * 30) + 35) : 'apagado'
+      } : null)
+    }
+  }
+
+  // Función para controlar el sensor DHT11 de forma simulada
+  const controlDHT11Sensor = (action: 'on' | 'off') => {
+    if (sensorData) {
+      setSensorData(prev => prev ? {
+        ...prev,
+        sensorDHT11: action === 'on' ? 'encendido' : 'apagado',
+        humedad: action === 'on' ? (Math.floor(Math.random() * 25) + 40) : 'apagado',
+        temperatura: action === 'on' ? (Math.floor(Math.random() * 15) + 20) : 'apagado'
+      } : null)
+    }
+  }
+
+  useEffect(() => {
+    // Simular conexión de sensores después de 3 segundos
+    const connectionTimer = setTimeout(() => {
+      setSensorData(generateSimulatedData())
+    }, 3000)
+
+    // Actualizar datos cada 5 segundos después de la conexión inicial
+    const updateTimer = setTimeout(() => {
+      const interval = setInterval(updateSimulatedData, 5000)
+      return () => clearInterval(interval)
+    }, 3000)
 
     return () => {
-      socket.disconnect()
+      clearTimeout(connectionTimer)
+      clearTimeout(updateTimer)
     }
   }, [])
 
@@ -80,12 +188,18 @@ export default function Component() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Cards con animación de entrada */}
             <div className="animate-in slide-in-from-left duration-500">
-              <SoilMoistureCard soilMoisture={sensorData.humedadSuelo} />
+              <SoilMoistureCard 
+                soilMoisture={sensorData.humedadSuelo}
+                onSensorControl={controlSoilMoistureSensor}
+                sensorStatus={sensorData.sensorHumedadSuelo}
+              />
             </div>
             <div className="animate-in slide-in-from-left duration-500 delay-150">
               <HumidityTemperatureCard 
                 humidity={sensorData.humedad} 
                 temperature={sensorData.temperatura}
+                onSensorControl={controlDHT11Sensor}
+                sensorStatus={sensorData.sensorDHT11}
               />
             </div>
             <div className="animate-in slide-in-from-left duration-500 delay-300">
@@ -96,6 +210,8 @@ export default function Component() {
                 pumpMode={sensorData.modoBomba} 
                 waterLevel={sensorData.nivelAgua}
                 pumpStatus={sensorData.Bomba}
+                onPumpControl={controlPump}
+                onModeChange={changePumpMode}
               />
             </div>
             <div className="animate-in slide-in-from-left duration-500 delay-600">
